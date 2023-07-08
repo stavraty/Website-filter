@@ -8,7 +8,7 @@
 import UIKit
 import WebKit
 
-class BrowserViewController: UIViewController, WKNavigationDelegate, UITextFieldDelegate {
+class BrowserViewController: UIViewController {
 
     private var webView: WKWebView!
     private var urlTextField: UITextField!
@@ -168,34 +168,6 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
             }
         }
     
-    func textFieldDidBeginEditing(_ textField: UITextField) {
-        textField.layer.borderWidth = 1.0
-        textField.layer.borderColor = UIColor.systemBlue.cgColor
-    }
-
-    func textFieldDidEndEditing(_ textField: UITextField) {
-        textField.layer.borderWidth = 0.0
-    }
-    
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
-        openUrl()
-        return true
-    }
-    
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        if let url = navigationAction.request.url {
-            for filter in filters {
-                if url.absoluteString.contains(filter) {
-                    showErrorAlert(for: .blockedURL)
-                    decisionHandler(.cancel)
-                    return
-                }
-            }
-        }
-        decisionHandler(.allow)
-    }
-
     @objc private func goBack() {
         if webView.canGoBack {
             webView.goBack()
@@ -231,6 +203,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
                 }
             }
         }
+        
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
         alert.addAction(addAction)
         alert.addAction(cancelAction)
@@ -264,8 +237,41 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
     }
 }
 
+extension BrowserViewController: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if let url = navigationAction.request.url {
+            for filter in filters {
+                if url.absoluteString.contains(filter) {
+                    showErrorAlert(for: .blockedURL)
+                    decisionHandler(.cancel)
+                    return
+                }
+            }
+        }
+        decisionHandler(.allow)
+    }
+}
+
+extension BrowserViewController: UITextFieldDelegate {
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        textField.layer.borderWidth = 1.0
+        textField.layer.borderColor = UIColor.systemBlue.cgColor
+    }
+
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        textField.layer.borderWidth = 0.0
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        openUrl()
+        return true
+    }
+}
+
 extension BrowserViewController: FilterViewControllerDelegate {
     func filterViewController(_ controller: FilterViewController, didUpdateFilters filters: [String]) {
         self.filters = filters
     }
 }
+

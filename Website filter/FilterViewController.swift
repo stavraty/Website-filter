@@ -11,7 +11,7 @@ protocol FilterViewControllerDelegate: AnyObject {
     func filterViewController(_ controller: FilterViewController, didUpdateFilters filters: [String])
 }
 
-class FilterViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class FilterViewController: UIViewController {
     var filters: [String] = [] {
         didSet {
             updateBackgroundState()
@@ -32,10 +32,10 @@ class FilterViewController: UIViewController, UITableViewDelegate, UITableViewDa
     
     private func setupTableView() {
         filtersTableView = UITableView()
+        view.addSubview(filtersTableView)
         filtersTableView.delegate = self
         filtersTableView.dataSource = self
         filtersTableView.register(UITableViewCell.self, forCellReuseIdentifier: "filterCell")
-        view.addSubview(filtersTableView)
     }
 
     private func setupConstraints() {
@@ -61,7 +61,9 @@ class FilterViewController: UIViewController, UITableViewDelegate, UITableViewDa
             backgroundView.isHidden = !filters.isEmpty
         }
     }
-    
+}
+
+extension FilterViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return filters.count
     }
