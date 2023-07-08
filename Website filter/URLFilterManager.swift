@@ -27,8 +27,6 @@ class URLFilterManager {
             completeUrlString = "https://" + completeUrlString
         }
 
-        print("Complete URL String: \(completeUrlString)")
-
         guard let url = URL(string: completeUrlString) else {
             return .failure(.invalidURL)
         }

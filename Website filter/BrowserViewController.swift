@@ -93,7 +93,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
         forwardButton.addTarget(self, action: #selector(goForward), for: .touchUpInside)
         filterButton.addTarget(self, action: #selector(addFilter), for: .touchUpInside)
         viewFilterButton.addTarget(self, action: #selector(viewFilters), for: .touchUpInside)
-        urlTextField.addTarget(self, action: #selector(loadURL), for: .editingDidEnd) // змінено з .editingDidEndOnExit на .editingDidEnd
+        urlTextField.addTarget(self, action: #selector(openUrl), for: .editingDidEnd)
     }
 
     private func createTextField(withPlaceholder placeholder: String) -> UITextField {
@@ -144,8 +144,8 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder() // виключити редагування текстового поля
-        loadURL() // завантажити URL
+        textField.resignFirstResponder()
+        openUrl()
         return true
     }
     
@@ -153,7 +153,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
         if let url = navigationAction.request.url {
             for filter in filters {
                 if url.absoluteString.contains(filter) {
-                    let alert = UIAlertController(title: "Blocked", message: "This page has been blocked by a filter.", preferredStyle: .alert)
+                    let alert = UIAlertController(title: "Blocked", message: "This page has been blocked by a filter", preferredStyle: .alert)
                     let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
                     alert.addAction(okAction)
                     present(alert, animated: true, completion: nil)
@@ -165,7 +165,6 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
         decisionHandler(.allow)
     }
 
-    // Action methods
     @objc private func goBack() {
         if webView.canGoBack {
             webView.goBack()
@@ -189,7 +188,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
                 if case .failure(let error) = urlManager.checkUrl("https://www.google.com") {
                     switch error {
                     case .invalidFilter:
-                        let alert = UIAlertController(title: "Error", message: "Filter must have at least 2 characters and must not contain spaces.", preferredStyle: .alert)
+                        let alert = UIAlertController(title: "Error", message: "Filter must have at least 2 characters and must not contain spaces", preferredStyle: .alert)
                         let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
                         alert.addAction(okAction)
                         self.present(alert, animated: true, completion: nil)
@@ -218,21 +217,6 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
         }
     }
 
-    @objc private func loadURL() {
-        if let urlText = urlTextField.text, let url = URL(string: urlText) {
-            for filter in filters {
-                if url.absoluteString.contains(filter) {
-                    let alert = UIAlertController(title: "Blocked", message: "This page has been blocked by a filter.", preferredStyle: .alert)
-                    let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
-                    alert.addAction(okAction)
-                    present(alert, animated: true, completion: nil)
-                    return
-                }
-            }
-            webView.load(URLRequest(url: url))
-        }
-    }
-
     @objc func openUrl() {
         guard let text = urlTextField?.text else {
             return
@@ -247,11 +231,11 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
             var errorMessage: String
             switch error {
             case URLFilterError.invalidURL:
-                errorMessage = "Please enter a valid URL."
+                errorMessage = "Please enter a valid URL"
             case URLFilterError.blockedURL:
-                errorMessage = "This page has been blocked by a filter."
+                errorMessage = "This page has been blocked by a filter"
             case URLFilterError.invalidFilter:
-                errorMessage = "Filter must have at least 2 characters and must not contain spaces."
+                errorMessage = "Filter must have at least 2 characters and must not contain spaces"
             }
             let alert = UIAlertController(title: "Error", message: errorMessage, preferredStyle: .alert)
             let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
