@@ -7,12 +7,6 @@
 
 import UIKit
 
-enum URLFilterError: Error {
-    case invalidURL
-    case blockedURL
-    case invalidFilter
-}
-
 class URLFilterManager {
 
     var filters: [String]
@@ -21,7 +15,7 @@ class URLFilterManager {
         self.filters = filters
     }
 
-    func checkUrl(_ urlString: String) -> Result<URL, URLFilterError> {
+    func checkUrl(_ urlString: String) -> Result<URL, AppError> {
         var completeUrlString = urlString
         if !completeUrlString.hasPrefix("http://") && !completeUrlString.hasPrefix("https://") {
             completeUrlString = "https://" + completeUrlString

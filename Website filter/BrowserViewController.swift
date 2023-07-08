@@ -18,20 +18,17 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
     private var viewFilterButton: UIButton!
     private var filters: [String] = []
     private var filtersTableView: UITableView!
+    private let reachability = try! Reachability()
         
     override func viewDidLoad() {
         super.viewDidLoad()
 
         setupViews()
-        setupWebView()
+        setupDelegates()
         setupConstraints()
         setupActions()
-        
-        urlTextField.delegate = self
-
-        if let url = URL(string: "https://www.google.com") {
-            webView.load(URLRequest(url: url))
-        }
+        setupReachability()
+        setupInitialURL()
     }
     
     private func setupViews() {
@@ -54,12 +51,12 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
         view.addSubview(webView)
     }
 
-    private func setupWebView() {
+    private func setupDelegates() {
         webView.navigationDelegate = self
+        urlTextField.delegate = self
     }
 
     private func setupConstraints() {
-        // Constraints
         NSLayoutConstraint.activate([
             urlTextField.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 10),
             urlTextField.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -10),
@@ -94,6 +91,24 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
         filterButton.addTarget(self, action: #selector(addFilter), for: .touchUpInside)
         viewFilterButton.addTarget(self, action: #selector(viewFilters), for: .touchUpInside)
         urlTextField.addTarget(self, action: #selector(openUrl), for: .editingDidEnd)
+    }
+    
+    private func setupReachability() {
+        reachability.whenUnreachable = { _ in
+            self.showErrorAlert(for: .noInternetConnection)
+        }
+
+        do {
+            try reachability.startNotifier()
+        } catch {
+            print("Unable to start notifier")
+        }
+    }
+
+    private func setupInitialURL() {
+        if let url = URL(string: "https://www.google.com") {
+            webView.load(URLRequest(url: url))
+        }
     }
 
     private func createTextField(withPlaceholder placeholder: String) -> UITextField {
@@ -134,6 +149,25 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
         return webView
     }
     
+    private func showErrorAlert(for error: AppError) {
+        let alert = UIAlertController(title: error.title, message: error.message, preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+        alert.addAction(okAction)
+        present(alert, animated: true, completion: nil)
+    }
+    
+    private func checkConnection() {
+            reachability.whenUnreachable = { _ in
+                self.showErrorAlert(for: .noInternetConnection)
+            }
+
+            do {
+                try reachability.startNotifier()
+            } catch {
+                print("Unable to start notifier")
+            }
+        }
+    
     func textFieldDidBeginEditing(_ textField: UITextField) {
         textField.layer.borderWidth = 1.0
         textField.layer.borderColor = UIColor.systemBlue.cgColor
@@ -153,10 +187,7 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
         if let url = navigationAction.request.url {
             for filter in filters {
                 if url.absoluteString.contains(filter) {
-                    let alert = UIAlertController(title: "Blocked", message: "This page has been blocked by a filter", preferredStyle: .alert)
-                    let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
-                    alert.addAction(okAction)
-                    present(alert, animated: true, completion: nil)
+                    showErrorAlert(for: .blockedURL)
                     decisionHandler(.cancel)
                     return
                 }
@@ -227,39 +258,27 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
         case .success(let url):
             let request = URLRequest(url: url)
             webView.load(request)
-        case .failure(let error):
-            var errorMessage: String
-            switch error {
-            case URLFilterError.invalidURL:
-                errorMessage = "Please enter a valid URL"
-            case URLFilterError.blockedURL:
-                errorMessage = "This page has been blocked by a filter"
-            case URLFilterError.invalidFilter:
-                errorMessage = "Filter must have at least 2 characters and must not contain spaces"
-            }
-            let alert = UIAlertController(title: "Error", message: errorMessage, preferredStyle: .alert)
-            let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
-            alert.addAction(okAction)
-            present(alert, animated: true, completion: nil)
+        case .failure(let appError):
+            showErrorAlert(for: appError)
         }
     }
 
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filters.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "filterCell", for: indexPath)
-        cell.textLabel?.text = filters[indexPath.row]
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            filters.remove(at: indexPath.row)
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        }
-    }
+//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+//        return filters.count
+//    }
+//
+//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//        let cell = tableView.dequeueReusableCell(withIdentifier: "filterCell", for: indexPath)
+//        cell.textLabel?.text = filters[indexPath.row]
+//        return cell
+//    }
+//    
+//    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+//        if editingStyle == .delete {
+//            filters.remove(at: indexPath.row)
+//            tableView.deleteRows(at: [indexPath], with: .fade)
+//        }
+//    }
 }
 
 extension BrowserViewController: FilterViewControllerDelegate {
