@@ -262,23 +262,6 @@ class BrowserViewController: UIViewController, WKNavigationDelegate, UITextField
             showErrorAlert(for: appError)
         }
     }
-
-//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//        return filters.count
-//    }
-//
-//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//        let cell = tableView.dequeueReusableCell(withIdentifier: "filterCell", for: indexPath)
-//        cell.textLabel?.text = filters[indexPath.row]
-//        return cell
-//    }
-//    
-//    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-//        if editingStyle == .delete {
-//            filters.remove(at: indexPath.row)
-//            tableView.deleteRows(at: [indexPath], with: .fade)
-//        }
-//    }
 }
 
 extension BrowserViewController: FilterViewControllerDelegate {
