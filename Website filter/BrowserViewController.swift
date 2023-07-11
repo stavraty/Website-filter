@@ -17,8 +17,7 @@ class BrowserViewController: UIViewController {
     private var filterButton: UIButton!
     private var viewFilterButton: UIButton!
     private var filters: [String] = []
-    private var filtersTableView: UITableView!
-    private let reachability = try! Reachability()
+    private var reachability: Reachability?
         
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,6 +28,74 @@ class BrowserViewController: UIViewController {
         setupActions()
         setupReachability()
         setupInitialURL()
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "viewFiltersSegue", let filterVC = segue.destination as? FilterViewController {
+            filterVC.filters = self.filters
+            filterVC.delegate = self
+        }
+    }
+    
+    @objc private func goBack() {
+        if webView.canGoBack {
+            webView.goBack()
+        }
+    }
+
+    @objc private func goForward() {
+        if webView.canGoForward {
+            webView.goForward()
+        }
+    }
+
+    @objc private func addFilter() {
+        let alert = UIAlertController(title: "Add Filter", message: nil, preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = "Filter text"
+        }
+        let addAction = UIAlertAction(title: "Add", style: .default) { _ in
+            if let text = alert.textFields?.first?.text, !text.isEmpty {
+                let urlManager = URLFilterManager(filters: [text])
+                if case .failure(let error) = urlManager.checkUrl("https://www.google.com") {
+                    switch error {
+                    case .invalidFilter:
+                        let alert = UIAlertController(title: "Error", message: "Filter must have at least 2 characters and must not contain spaces", preferredStyle: .alert)
+                        let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+                        alert.addAction(okAction)
+                        self.present(alert, animated: true, completion: nil)
+                    default:
+                        break
+                    }
+                } else {
+                    self.filters.append(text)
+                }
+            }
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alert.addAction(addAction)
+        alert.addAction(cancelAction)
+        present(alert, animated: true, completion: nil)
+    }
+    
+    @objc private func viewFilters() {
+        performSegue(withIdentifier: "viewFiltersSegue", sender: nil)
+    }
+
+    @objc func openUrl() {
+        guard let text = urlTextField?.text else {
+            return
+        }
+
+        let urlManager = URLFilterManager(filters: self.filters)
+        switch urlManager.checkUrl(text) {
+        case .success(let url):
+            let request = URLRequest(url: url)
+            webView.load(request)
+        case .failure(let appError):
+            showErrorAlert(for: appError)
+        }
     }
     
     private func setupViews() {
@@ -94,12 +161,13 @@ class BrowserViewController: UIViewController {
     }
     
     private func setupReachability() {
-        reachability.whenUnreachable = { _ in
+        reachability = try? Reachability()
+        reachability?.whenUnreachable = { _ in
             self.showErrorAlert(for: .noInternetConnection)
         }
 
         do {
-            try reachability.startNotifier()
+            try reachability?.startNotifier()
         } catch {
             print("Unable to start notifier")
         }
@@ -157,84 +225,16 @@ class BrowserViewController: UIViewController {
     }
     
     private func checkConnection() {
-            reachability.whenUnreachable = { _ in
+        reachability?.whenUnreachable = { _ in
                 self.showErrorAlert(for: .noInternetConnection)
             }
 
             do {
-                try reachability.startNotifier()
+                try reachability?.startNotifier()
             } catch {
                 print("Unable to start notifier")
             }
         }
-    
-    @objc private func goBack() {
-        if webView.canGoBack {
-            webView.goBack()
-        }
-    }
-
-    @objc private func goForward() {
-        if webView.canGoForward {
-            webView.goForward()
-        }
-    }
-
-    @objc private func addFilter() {
-        let alert = UIAlertController(title: "Add Filter", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "Filter text"
-        }
-        let addAction = UIAlertAction(title: "Add", style: .default) { _ in
-            if let text = alert.textFields?.first?.text, !text.isEmpty {
-                let urlManager = URLFilterManager(filters: [text])
-                if case .failure(let error) = urlManager.checkUrl("https://www.google.com") {
-                    switch error {
-                    case .invalidFilter:
-                        let alert = UIAlertController(title: "Error", message: "Filter must have at least 2 characters and must not contain spaces", preferredStyle: .alert)
-                        let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
-                        alert.addAction(okAction)
-                        self.present(alert, animated: true, completion: nil)
-                    default:
-                        break
-                    }
-                } else {
-                    self.filters.append(text)
-                }
-            }
-        }
-        
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        alert.addAction(addAction)
-        alert.addAction(cancelAction)
-        present(alert, animated: true, completion: nil)
-    }
-    
-    @objc private func viewFilters() {
-        performSegue(withIdentifier: "viewFiltersSegue", sender: nil)
-    }
-
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "viewFiltersSegue", let filterVC = segue.destination as? FilterViewController {
-            filterVC.filters = self.filters
-            filterVC.delegate = self
-        }
-    }
-
-    @objc func openUrl() {
-        guard let text = urlTextField?.text else {
-            return
-        }
-
-        let urlManager = URLFilterManager(filters: self.filters)
-        switch urlManager.checkUrl(text) {
-        case .success(let url):
-            let request = URLRequest(url: url)
-            webView.load(request)
-        case .failure(let appError):
-            showErrorAlert(for: appError)
-        }
-    }
 }
 
 extension BrowserViewController: WKNavigationDelegate {
