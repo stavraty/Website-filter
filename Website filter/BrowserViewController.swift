@@ -274,4 +274,3 @@ extension BrowserViewController: FilterViewControllerDelegate {
         self.filters = filters
     }
 }
-
