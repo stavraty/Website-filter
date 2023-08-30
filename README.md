@@ -13,7 +13,7 @@ This app is a straightforward web browser for iOS, built using Swift, UIKit, and
 
 2. Use the terminal to navigate to the project directory and install all the necessary dependencies using CocoaPods:
 
-3. Open the project file `MySimpleBrowser.xcworkspace` in Xcode.
+3. Open the project file `Website filter.xcodeproj` in Xcode.
 
 4. Configure your environment according to your needs.
 
