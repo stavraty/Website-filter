@@ -36,7 +36,7 @@ This app is a straightforward web browser for iOS, built using Swift, UIKit, and
 
 ## License
 
-This project is distributed under the [MIT License](LICENSE).
+This project is distributed under the [MIT License](https://github.com/stavraty/Website-filter/blob/dev/LICENCE).
 
 ---
 
